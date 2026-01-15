@@ -1,0 +1,37 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>3D скан лица</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <div class="title">3D скан лица</div>
+        <div class="subtitle">Листайте, чтобы вращать. Колесо — масштаб.</div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="resetView">Сбросить вид</button>
+      </div>
+    </header>
+
+    <section class="viewer">
+      <canvas id="viewerCanvas" aria-label="3D модель лица"></canvas>
+      <div class="hint">Потяните мышью / пальцем, чтобы вращать модель</div>
+      <div class="loading" id="loading">Загружаю модель…</div>
+    </section>
+  </main>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
