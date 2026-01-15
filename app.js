@@ -5,6 +5,7 @@ import { GLTFLoader } from "https://unpkg.com/three@0.160.0/examples/jsm/loaders
 const canvas = document.querySelector("#viewerCanvas");
 const loading = document.querySelector("#loading");
 const resetView = document.querySelector("#resetView");
+const modelSelect = document.querySelector("#modelSelect");
 
 if (!canvas) {
   throw new Error("Canvas #viewerCanvas не найден.");
@@ -35,47 +36,84 @@ dirLight.position.set(2, 4, 3);
 scene.add(dirLight);
 
 const loader = new GLTFLoader();
-const modelPath = "foto/15_01_2026.glb";
+const models = [
+  { label: "Модель 1", path: "foto/1/15_01_2026.glb" },
+  { label: "Модель 2", path: "foto/2/15_01_2026.glb" },
+  { label: "Модель 3", path: "foto/3/15_01_2026.glb" },
+  { label: "Модель 4", path: "foto/4/15_01_2026.glb" },
+  { label: "Модель 5", path: "foto/5/15_01_2026.glb" },
+];
 let modelGroup = null;
 let defaultCameraState = null;
 
-loader.load(
-  modelPath,
-  (gltf) => {
-    modelGroup = gltf.scene;
-    scene.add(modelGroup);
+function disposeModel(object) {
+  object.traverse((child) => {
+    if (child.isMesh) {
+      if (child.geometry) {
+        child.geometry.dispose();
+      }
+      if (child.material) {
+        const materials = Array.isArray(child.material) ? child.material : [child.material];
+        materials.forEach((material) => {
+          if (material.map) {
+            material.map.dispose();
+          }
+          material.dispose();
+        });
+      }
+    }
+  });
+}
 
-    const box = new THREE.Box3().setFromObject(modelGroup);
-    const size = new THREE.Vector3();
-    const center = new THREE.Vector3();
-    box.getSize(size);
-    box.getCenter(center);
+function loadModel(index) {
+  const entry = models[index] || models[0];
+  loading.textContent = "Загружаю модель…";
+  loading.classList.remove("hidden");
 
-    modelGroup.position.sub(center);
-
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const fitDist = maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
-
-    camera.position.set(0, size.y * 0.15, fitDist * 1.2);
-    camera.near = Math.max(fitDist / 100, 0.01);
-    camera.far = fitDist * 10;
-    camera.updateProjectionMatrix();
-
-    controls.target.set(0, 0, 0);
-    controls.update();
-
-    defaultCameraState = {
-      position: camera.position.clone(),
-      target: controls.target.clone(),
-    };
-
-    loading.classList.add("hidden");
-  },
-  undefined,
-  () => {
-    loading.textContent = "Не удалось загрузить модель.";
+  if (modelGroup) {
+    scene.remove(modelGroup);
+    disposeModel(modelGroup);
+    modelGroup = null;
   }
-);
+
+  loader.load(
+    entry.path,
+    (gltf) => {
+      modelGroup = gltf.scene;
+      scene.add(modelGroup);
+
+      const box = new THREE.Box3().setFromObject(modelGroup);
+      const size = new THREE.Vector3();
+      const center = new THREE.Vector3();
+      box.getSize(size);
+      box.getCenter(center);
+
+      modelGroup.position.sub(center);
+
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fitDist = maxDim / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+
+      camera.position.set(0, size.y * 0.15, fitDist * 1.2);
+      camera.near = Math.max(fitDist / 100, 0.01);
+      camera.far = fitDist * 10;
+      camera.updateProjectionMatrix();
+
+      controls.target.set(0, 0, 0);
+      controls.update();
+
+      defaultCameraState = {
+        position: camera.position.clone(),
+        target: controls.target.clone(),
+      };
+
+      loading.classList.add("hidden");
+    },
+    undefined,
+    () => {
+      loading.textContent = "Не удалось загрузить модель.";
+    }
+  );
+}
 
 function resizeRenderer() {
   const { clientWidth, clientHeight } = canvas;
@@ -101,6 +139,14 @@ if (resetView) {
   });
 }
 
+if (modelSelect) {
+  modelSelect.addEventListener("change", (event) => {
+    const index = Number(event.target.value);
+    loadModel(index);
+  });
+}
+
 window.addEventListener("resize", resizeRenderer);
 resizeRenderer();
+loadModel(0);
 animate();
